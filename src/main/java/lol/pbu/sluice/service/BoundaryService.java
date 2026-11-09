@@ -156,6 +156,9 @@ public class BoundaryService {
         if (geometry == null) {
             return false;
         }
-        return geometry.covers(point) || geometry.contains(point);
+        if (!geometry.getEnvelopeInternal().covers(point.getCoordinate())) {
+            return false;
+        }
+        return geometry.covers(point);
     }
 }
