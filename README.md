@@ -1,4 +1,4 @@
-# Sluice
+# Sluice [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=pbu-projects_sluice&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=pbu-projects_sluice) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=pbu-projects_sluice&metric=coverage)](https://sonarcloud.io/summary/new_code?id=pbu-projects_sluice)
 
 Sluice is a geographic boundary pipeline and spatial streaming service for pbu projects, including [Kaiju](https://github.com/pbu-projects/Kaiju).
 

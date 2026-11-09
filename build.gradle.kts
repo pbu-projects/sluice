@@ -4,6 +4,7 @@ plugins {
     id("com.gradleup.shadow") version "9.4.1"
     id("io.micronaut.aot") version "5.0.2"
     id("jacoco")
+    id("org.sonarqube") version "7.5.0.8588"
 }
 
 version = project.properties["sluiceVersion"]!!
@@ -75,8 +76,27 @@ tasks.withType<AbstractTestTask>().configureEach {
     failOnNoDiscoveredTests = false
 }
 
+tasks.named<Test>("test") {
+    finalizedBy(tasks.jacocoTestReport)
+}
+
 tasks.jacocoTestReport {
     reports {
         xml.required.set(true)
+    }
+}
+
+sonar {
+    properties {
+        property("sonar.projectKey", "pbu-projects_sluice")
+        property("sonar.organization", "peanutbutter-unicorn")
+        property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.coverage.exclusions", "**/Application.java")
+        property("sonar.coverage.jacoco.xmlReportPath", layout.buildDirectory.file("reports/jacoco/test/jacocoTestReport.xml").get().asFile.absolutePath)
+        (System.getenv("SONAR_TOKEN") ?: System.getenv("sonar_token"))?.let { token ->
+            if (token.isNotBlank()) {
+                property("sonar.token", token)
+            }
+        }
     }
 }
