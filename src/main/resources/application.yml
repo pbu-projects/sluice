@@ -1,0 +1,9 @@
+micronaut:
+  application:
+    name: sluice
+  server:
+    port: 8085
+endpoints:
+  health:
+    enabled: true
+    sensitive: false

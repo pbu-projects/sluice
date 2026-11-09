@@ -1,0 +1,30 @@
+# Build outputs
+.gradle/
+build/
+out/
+target/
+
+# IDE and Editors
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.settings
+.classpath
+.factorypath
+.vscode/
+
+# Operating System Files
+Thumbs.db
+.DS_Store
+
+# Backups and Temp
+*.bkp
+.$*
+
+# Environment Configurations
+.env
+.env.*
+!.env.example
+*.log
