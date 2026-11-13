@@ -61,7 +61,16 @@ public class BoundaryService {
     private InputStream openBoundaryStream(String resourcePath) throws IOException {
         InputStream gzStream = getClass().getResourceAsStream(resourcePath + ".gz");
         if (gzStream != null) {
-            return new GZIPInputStream(gzStream);
+            try {
+                return new GZIPInputStream(gzStream);
+            } catch (IOException e) {
+                try {
+                    gzStream.close();
+                } catch (IOException closeEx) {
+                    e.addSuppressed(closeEx);
+                }
+                throw e;
+            }
         }
         return getClass().getResourceAsStream(resourcePath);
     }
@@ -135,9 +144,6 @@ public class BoundaryService {
 
         String stateCode = matchedState.map(BoundaryDto::stateCode).orElse(null);
         String stateName = matchedState.map(BoundaryDto::name).orElse(null);
-        String timeZone = matchedState
-                .map(s -> s.properties() != null ? (String) s.properties().get("timeZone") : null)
-                .orElse(null);
 
         Optional<BoundaryDto> matchedCounty = counties.stream()
                 .filter(c -> stateCode == null || (c.stateCode() != null && c.stateCode().equalsIgnoreCase(stateCode)))
