@@ -5,6 +5,7 @@ import jakarta.inject.Inject
 import lol.pbu.sluice.model.BoundaryDto
 import lol.pbu.sluice.model.BoundaryLevel
 import lol.pbu.sluice.model.ReverseGeocodeResult
+import org.locationtech.jts.geom.Geometry
 import spock.lang.Specification
 
 @MicronautTest
@@ -136,6 +137,58 @@ class BoundaryServiceSpec extends Specification {
             county() == null
             city() == null
             timeZone() == null
+        }
+    }
+
+    def "loading uncompressed boundary json falls back when gz archive is absent"() {
+        given:
+        Map<String, Geometry> geometries = [:]
+
+        when:
+        List<BoundaryDto> loaded = boundaryService.loadBoundaries("/boundaries/plain-test.json", geometries)
+
+        then:
+        verifyAll {
+            loaded.size() == 1
+            loaded[0].id() == "TEST-1"
+            geometries.containsKey("TEST-1")
+        }
+    }
+
+    def "loading missing or corrupt boundary resources returns empty list"() {
+        given:
+        Map<String, Geometry> missingGeometries = [:]
+        Map<String, Geometry> corruptGeometries = [:]
+
+        when:
+        List<BoundaryDto> missing = boundaryService.loadBoundaries("/boundaries/does-not-exist.json", missingGeometries)
+        List<BoundaryDto> corrupt = boundaryService.loadBoundaries("/boundaries/corrupt-test.json", corruptGeometries)
+
+        then:
+        verifyAll {
+            missing.isEmpty()
+            missingGeometries.isEmpty()
+            corrupt.isEmpty()
+            corruptGeometries.isEmpty()
+        }
+    }
+
+    def "extracting timezone ignores blank or missing values"() {
+        given:
+        BoundaryDto blankTz = new BoundaryDto("B-1", "Blank", BoundaryLevel.CITY, "CO", null, null, [timeZone: "   "])
+        BoundaryDto noProps = new BoundaryDto("B-2", "NoProps", BoundaryLevel.CITY, "CO", null, null, null)
+        BoundaryDto validTz = new BoundaryDto("B-3", "Valid", BoundaryLevel.STATE, "CO", null, null, [timeZone: "America/Denver"])
+
+        when:
+        Optional<String> fromBlank = boundaryService.extractTimeZone(Optional.of(blankTz))
+        Optional<String> fromNoProps = boundaryService.extractTimeZone(Optional.of(noProps))
+        Optional<String> fromValid = boundaryService.extractTimeZone(Optional.of(validTz))
+
+        then:
+        verifyAll {
+            fromBlank.isEmpty()
+            fromNoProps.isEmpty()
+            fromValid == Optional.of("America/Denver")
         }
     }
 }

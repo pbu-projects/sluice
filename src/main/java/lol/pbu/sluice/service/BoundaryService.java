@@ -58,7 +58,7 @@ public class BoundaryService {
         this.cities = loadBoundaries("/boundaries/cities.json", cityGeometries);
     }
 
-    private InputStream openBoundaryStream(String resourcePath) throws IOException {
+    InputStream openBoundaryStream(String resourcePath) throws IOException {
         InputStream gzStream = getClass().getResourceAsStream(resourcePath + ".gz");
         if (gzStream != null) {
             try {
@@ -75,7 +75,7 @@ public class BoundaryService {
         return getClass().getResourceAsStream(resourcePath);
     }
 
-    private List<BoundaryDto> loadBoundaries(String resourcePath, Map<String, Geometry> geometryMap) {
+    List<BoundaryDto> loadBoundaries(String resourcePath, Map<String, Geometry> geometryMap) {
         try (InputStream stream = openBoundaryStream(resourcePath)) {
             if (stream == null) {
                 log.warn("Boundary seed file not found: {}", resourcePath);
@@ -172,7 +172,7 @@ public class BoundaryService {
         );
     }
 
-    private Optional<String> extractTimeZone(Optional<BoundaryDto> boundary) {
+    Optional<String> extractTimeZone(Optional<BoundaryDto> boundary) {
         return boundary
                 .map(BoundaryDto::properties)
                 .map(props -> (String) props.get("timeZone"))

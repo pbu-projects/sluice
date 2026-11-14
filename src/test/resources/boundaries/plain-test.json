@@ -1,0 +1,13 @@
+[
+  {
+    "id": "TEST-1",
+    "name": "Test Boundary",
+    "level": "STATE",
+    "stateCode": "TS",
+    "countyName": null,
+    "geometryGeoJson": "{\"type\":\"Polygon\",\"coordinates\":[[[-105.0,39.0],[-104.0,39.0],[-104.0,40.0],[-105.0,40.0],[-105.0,39.0]]]}",
+    "properties": {
+      "timeZone": "America/Denver"
+    }
+  }
+]
