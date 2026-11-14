@@ -1,6 +1,6 @@
-# Multi-stage container build for Sluice using Java 25 and Micronaut AOT
+# Multi-stage build for Sluice using GraalVM 25 Native Image
 
-FROM eclipse-temurin:25-jdk AS build
+FROM ghcr.io/graalvm/native-image-community:25 AS build
 WORKDIR /home/app
 
 COPY gradle gradle
@@ -10,18 +10,19 @@ RUN ./gradlew dependencies --no-daemon || true
 
 COPY src src
 
-RUN ./gradlew optimizedJitJarAll --no-daemon
+RUN ./gradlew nativeOptimizedCompile --no-daemon
 
-FROM eclipse-temurin:25-jre
+# Minimal Debian runtime compatible with the build image glibc
+FROM debian:trixie-slim
 WORKDIR /home/app
 
 RUN groupadd -g 10001 sluice && \
     useradd -u 10001 -g sluice -m -s /bin/false sluice
 
-COPY --from=build --chown=sluice:sluice /home/app/build/libs/sluice-*-all-optimized.jar /home/app/application.jar
+COPY --from=build --chown=sluice:sluice /home/app/build/native/nativeOptimizedCompile/sluice /home/app/sluice
 
 USER 10001:10001
 
-EXPOSE 8080
+EXPOSE 8085
 
-ENTRYPOINT ["java", "-jar", "/home/app/application.jar"]
+ENTRYPOINT ["/home/app/sluice"]
