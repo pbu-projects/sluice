@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.GZIPInputStream;
 
 @Singleton
 @Context
@@ -57,8 +58,25 @@ public class BoundaryService {
         this.cities = loadBoundaries("/boundaries/cities.json", cityGeometries);
     }
 
-    private List<BoundaryDto> loadBoundaries(String resourcePath, Map<String, Geometry> geometryMap) {
-        try (InputStream stream = getClass().getResourceAsStream(resourcePath)) {
+    InputStream openBoundaryStream(String resourcePath) throws IOException {
+        InputStream gzStream = getClass().getResourceAsStream(resourcePath + ".gz");
+        if (gzStream != null) {
+            try {
+                return new GZIPInputStream(gzStream);
+            } catch (IOException e) {
+                try {
+                    gzStream.close();
+                } catch (IOException closeEx) {
+                    e.addSuppressed(closeEx);
+                }
+                throw e;
+            }
+        }
+        return getClass().getResourceAsStream(resourcePath);
+    }
+
+    List<BoundaryDto> loadBoundaries(String resourcePath, Map<String, Geometry> geometryMap) {
+        try (InputStream stream = openBoundaryStream(resourcePath)) {
             if (stream == null) {
                 log.warn("Boundary seed file not found: {}", resourcePath);
                 return Collections.emptyList();
@@ -126,9 +144,6 @@ public class BoundaryService {
 
         String stateCode = matchedState.map(BoundaryDto::stateCode).orElse(null);
         String stateName = matchedState.map(BoundaryDto::name).orElse(null);
-        String timeZone = matchedState
-                .map(s -> s.properties() != null ? (String) s.properties().get("timeZone") : null)
-                .orElse(null);
 
         Optional<BoundaryDto> matchedCounty = counties.stream()
                 .filter(c -> stateCode == null || (c.stateCode() != null && c.stateCode().equalsIgnoreCase(stateCode)))
@@ -144,12 +159,24 @@ public class BoundaryService {
 
         String cityName = matchedCity.map(BoundaryDto::name).orElse(null);
 
+        String resolvedTimeZone = extractTimeZone(matchedCity)
+                .or(() -> extractTimeZone(matchedCounty))
+                .or(() -> extractTimeZone(matchedState))
+                .orElse(null);
+
         return new ReverseGeocodeResult(
                 stateCode != null ? stateCode : stateName,
                 countyName,
                 cityName,
-                timeZone
+                resolvedTimeZone
         );
+    }
+
+    Optional<String> extractTimeZone(Optional<BoundaryDto> boundary) {
+        return boundary
+                .map(BoundaryDto::properties)
+                .map(props -> (String) props.get("timeZone"))
+                .filter(tz -> !tz.isBlank());
     }
 
     private boolean covers(@Nullable Geometry geometry, Point point) {
