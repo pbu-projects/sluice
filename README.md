@@ -72,3 +72,17 @@ Start the application:
 ```bash
 ./gradlew run
 ```
+
+## Building and Running with Docker
+
+Sluice ships as a GraalVM Native Image inside a small Debian container.
+
+Build the image:
+```bash
+docker build -t sluice .
+```
+
+Run the container on port 8085:
+```bash
+docker run --rm -p 8085:8085 sluice
+```
